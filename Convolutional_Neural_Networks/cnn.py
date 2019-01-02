@@ -47,7 +47,8 @@ classifier.add(Flatten())
 
 # Step 4 - Full connection
 classifier.add(Dense(units=128, activation='relu'))
-classifier.add(Dense(units=128, activation='relu'))
+classifier.add(Dense(units=64, activation='relu'))
+classifier.add(Dense(units=32, activation='relu'))
 # classifier.add(LeakyReLU(alpha=0.2))
 # using 'LeakyReLU' did not end in a significant change
 classifier.add(Dense(units=1, activation='sigmoid'))
@@ -62,22 +63,25 @@ from keras.preprocessing.image import ImageDataGenerator
 
 train_datagen = ImageDataGenerator(rescale=1./255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True,
                                    rotation_range=45)
-# adding rotation_range resulted in a few increase, whereas adding 'vertical_flip' had worse result
+# adding rotation_range resulted in a few increase, whereas adding 'vertical_flip' had worsen the result
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 training_set = train_datagen.flow_from_directory('dataset/training_set',
-                                                 target_size=(128, 128),
-                                                 batch_size=32,
+                                                 target_size=(64, 64),
+                                                 batch_size=16,
                                                  class_mode='binary')
 # increasing 'batch_size' slows down the system, however a slight increase is observed
 test_set = test_datagen.flow_from_directory('dataset/test_set',
-                                            target_size=(128, 128),
-                                            batch_size=32,
+                                            target_size=(64, 64),
+                                            batch_size=16,
                                             class_mode='binary')
 
 classifier.fit_generator(training_set,
-                         steps_per_epoch=200,
-                         epochs=100,
+                         steps_per_epoch=8000,
+                         epochs=25,
                          validation_data=test_set,
-                         validation_steps=100)
+                         validation_steps=2000)
 
+
+# save the classifier and weights as an HDF5 file
+classifier.save('trained_model.h5')
