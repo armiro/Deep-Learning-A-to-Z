@@ -6,12 +6,17 @@
 # Part 1 - Data Preprocessing
 
 # Importing the libraries
-# import numpy as np
-# import matplotlib.pyplot as plt
 import pandas as pd
+import pickle
 
 pd.set_option('display.width', 200)
 pd.set_option("display.max_columns", 14)
+
+
+def save_object(object_name, file_name):
+    with open(file=file_name, mode='wb') as output_file:
+        pickle.dump(obj=object_name, file=output_file, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 # Importing the dataset
 dataset = pd.read_csv('Churn_Modelling.csv')
@@ -47,6 +52,8 @@ from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
 X_train = sc.fit_transform(X=X_train)
 X_test = sc.transform(X=X_test)
+# save the 'sc' object for any further usage
+save_object(object_name=sc, file_name='sc.txt')
 
 # Part 2 - Now let's make the ANN!
 
@@ -77,6 +84,9 @@ classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accur
 
 # Fitting the ANN to the Training set
 classifier.fit(x=X_train, y=y_train, batch_size=10, epochs=100)
+
+# save the classifier and weights as an HDF5 file
+classifier.save('trained_model.h5')
 
 # Part 3 - Making predictions and evaluating the model
 
