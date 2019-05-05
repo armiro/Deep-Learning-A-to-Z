@@ -21,15 +21,16 @@ training_set_scaled = sc.fit_transform(training_set)
 # we have two feature scaling methods: Standardization(StandardScaler) and Normalization (MinMaxScaler)
 # rule of thumb: when having "sigmoid" as the activ. func., better to use Normalization (like here)
 
-# Creating a data structure with 60 timesteps and 1 output
+# Creating a data structure with manual timesteps and 1 output
 X_train = list()
 y_train = list()
-for i in range(60, len(training_set)):
-    X_train.append(training_set_scaled[i-60:i, 0])
+timesteps = 60
+for i in range(timesteps, len(training_set)):
+    X_train.append(training_set_scaled[i-timesteps:i, 0])
     y_train.append(training_set_scaled[i, 0])
 X_train, y_train = np.array(X_train), np.array(y_train)
 # based on the stock price in the last 60 days, we are going to predict it on the next day
-# hence, timestep is equal to 60. notice that len(training_set) is 1258.
+# hence, timesteps is equal to 60. notice that len(training_set) is 1258.
 
 # Reshaping
 X_train = np.reshape(a=X_train, newshape=(X_train.shape[0], X_train.shape[1], 1))
@@ -53,6 +54,7 @@ regressor = Sequential()
 regressor.add(LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], 1)))
 regressor.add(Dropout(rate=0.2))
 # the "units" means the number of neurons to add in the hidden layer in each LSTM layer
+# when we want to add another LSTM layer after the current layer, we need to set return_sequences to True
 # using dropout rate equal to 0.2 means that here 10 neurons are ignored
 
 
@@ -90,20 +92,21 @@ real_stock_price = dataset_test.iloc[:, 1:2].values
 dataset_total = pd.concat((dataset_train['Open'], dataset_test['Open']), axis=0)
 # axis=0 means vertically (columns), axis=1 means horizontally (rows)
 
-inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
+inputs = dataset_total[len(dataset_total) - len(dataset_test) - timesteps:].values
+# or, inputs = dataset_total[len(dataset_train) - timesteps:].values
 inputs = inputs.reshape(-1, 1)
 inputs = sc.transform(inputs)
 
 X_test = list()
-for i in range(60, 80):
-    X_test.append(inputs[i-60:i, 0])
+for i in range(timesteps, len(inputs)):
+    X_test.append(inputs[i - timesteps:i, 0])
 X_test = np.array(X_test)
-X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+X_test = np.reshape(a=X_test, newshape=(X_test.shape[0], X_test.shape[1], 1))
 predicted_stock_price = regressor.predict(X_test)
 predicted_stock_price = sc.inverse_transform(predicted_stock_price)
-# we need to do inverse scaling because the model was fitted on the scaled y_train (line 29)
+# we need to do inverse scaling because the model was fitted on the scaled y_train (line 30)
 
-# Visualising the results
+# Visualizing the results
 plt.plot(real_stock_price, color='red', label='Real Google Stock Price')
 plt.plot(predicted_stock_price, color='blue', label='Predicted Google Stock Price')
 plt.title('Google Stock Price Prediction')
